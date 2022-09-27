@@ -35,13 +35,14 @@ const itemsData = [
 
 function App() {
   const [itemToDo, setItemTodo] = useState("");
-  const [items, setItems] = useState(itemsData);
+  const [items, setItems] = useState(JSON.parse(localStorage.getItem('blog')) || itemsData);
   const [type, setType] = useState("all");
 
   const handleItemToDo = (event) => {
     setItemTodo(event.target.value);
   };
 
+  localStorage.setItem('blog', JSON.stringify(items))
   const handleAddItem = () => {
     const newObj = { key: uuid(), label: itemToDo };
 
@@ -68,6 +69,29 @@ function App() {
   const filteredItems =
     type === "active" ? notDoneItems : type === "done" ? doneItems : items;
 
+
+  function handleDeleteItem(key) {
+    const idx = [...items].filter((item) => item.key !== key);
+    setItems(idx);
+  }
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+console.log(searchTerm)
+
+  function handleItemBold(key) {
+    const newArray = items.map((item) => {
+      if (item.key === key) {
+        return { ...item, isBold: !item.isBold };
+      } else return item;
+    });
+
+    setItems(newArray);
+  };
+
   return (
     <div className="todo-app">
       {/* App-header */}
@@ -81,9 +105,11 @@ function App() {
       <div className="top-panel d-flex">
         {/* Search-panel */}
         <input
-          type="text"
-          className="form-control search-input"
-          placeholder="type to search"
+            type="text"
+            placeholder="Search"
+            className="form-control"
+            value={searchTerm}
+            onChange={handleChange}
         />
         {/* Item-status-filter */}
         <div className="btn-group">
@@ -103,29 +129,35 @@ function App() {
 
       {/* List-group */}
       <ul className="list-group todo-list">
-        {filteredItems.map((item) => (
+        {filteredItems.filter((item) => {
+          const search = (item.label).toLowerCase();
+          return search.includes(searchTerm.toLowerCase())
+        }).map((item) => (
           <li
-            key={item.key}
-            className="list-group-item"
-            onClick={() => handleItemDone(item.key)}
+              className="list-group-item"
           >
-            <span className={`todo-list-item ${item.isDone ? "done" : ""}`}>
-              <span className="todo-list-item-label">{item.label}</span>
+
+            <span className={`todo-list-item ${item.isDone ? "done" : ""} ${item.isBold ? "h4" : ""}`}>
+              <span onClick={() => handleItemDone(item.key)} className="todo-list-item-label">{item.label}</span>
 
               <button
                 type="button"
                 className="btn btn-outline-success btn-sm float-right"
+                onClick={() => handleItemBold(item.key)}
               >
                 <i className="fa fa-exclamation" />
               </button>
 
               <button
-                type="button"
-                className="btn btn-outline-danger btn-sm float-right"
+                  key={item.key}
+                  type="button"
+                  onClick={() => handleDeleteItem(item.key)}
+                  className="btn btn-outline-danger btn-sm float-right"
               >
-                <i className="fa fa-trash-o" />
+                 <i className="fa fa-trash-o" />
               </button>
             </span>
+
           </li>
         ))}
       </ul>
